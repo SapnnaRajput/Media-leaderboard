@@ -1,5 +1,5 @@
 import React from 'react';
-import { HeroSection } from './HeroSection';
+import { HeroSection } from './Herosection.jsx';
 import { FeaturedMedia } from './FeaturedMedia';
 import { TopJournalists } from './TopJournalists';
 import { SearchFunctionality } from './SearchFunctionality';
@@ -9,10 +9,10 @@ export const Home = () => {
   return (
     <main>
       <HeroSection />
-      <SearchFunctionality />
-      <QuickFilters />
+      {/* <SearchFunctionality /> */}
+      {/* <QuickFilters />
       <FeaturedMedia />
-      <TopJournalists />
+      <TopJournalists /> */}
     </main>
   );
 }; 
