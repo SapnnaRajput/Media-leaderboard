@@ -30,7 +30,7 @@ const socialLinks = [
 
 export const Footer = () => {
   return (
-    <footer className="bg-gray-50 dark:bg-gray-900">
+    <footer className="bg-white border-t border-gray-100">
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -40,10 +40,10 @@ export const Footer = () => {
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
           >
-            <Link to="/" className="text-2xl font-bold text-primary-600">
+            <Link to="/" className="text-2xl font-bold text-blue-600">
               MediaLeader
             </Link>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">
+            <p className="mt-4 text-gray-600">
               Connecting brands with the right media and journalists
             </p>
             <div className="mt-4 flex space-x-4">
@@ -51,33 +51,34 @@ export const Footer = () => {
                 <a
                   key={social.name}
                   href={social.href}
-                  className="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                  className="text-gray-500 hover:text-blue-600 transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <span className="sr-only">{social.name}</span>
-                  {social.icon}
+                  <span className="text-xl">{social.icon}</span>
                 </a>
               ))}
             </div>
           </motion.div>
 
           {/* Links */}
-          {Object.entries(footerLinks).map(([category, links], index) => (
+          {Object.entries(footerLinks).map(([category, links]) => (
             <motion.div
               key={category}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+              <h3 className="text-lg font-semibold text-gray-900 capitalize mb-4">
                 {category}
               </h3>
-              <ul className="mt-4 space-y-4">
+              <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.name}>
                     <Link
                       to={link.href}
-                      className="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                      className="text-gray-500 hover:text-blue-600 transition-colors"
                     >
                       {link.name}
                     </Link>
@@ -89,17 +90,11 @@ export const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          viewport={{ once: true }}
-          className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"
-        >
-          <p className="text-center text-gray-600 dark:text-gray-400">
-            © {new Date().getFullYear()} MediaLeader. All rights reserved.
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <p className="text-center text-gray-500">
+            {new Date().getFullYear()} MediaLeader. All rights reserved.
           </p>
-        </motion.div>
+        </div>
       </div>
     </footer>
   );

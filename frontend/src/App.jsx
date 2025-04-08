@@ -2,11 +2,17 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout/Layout';
 import { Home } from './Pages/Home';
+import Login from './Pages/Auth/Login';
+import Signup from './Pages/Auth/Signup';
+import VerifyEmail from './Pages/Auth/VerifyEmail';
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="dashboard" element={<div>Dashboard</div>} />

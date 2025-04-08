@@ -1,11 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const Header = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser && storedUser !== 'undefined') {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser) {
+          setUser(parsedUser);
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      // Clear invalid data
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    navigate('/');
+  };
+
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm">
-      <div className="container mx-auto px-4">
+    <header className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <motion.div
@@ -14,7 +41,7 @@ export const Header = () => {
             transition={{ duration: 0.5 }}
           >
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-primary-600">MediaLeader</span>
+              <span className="text-2xl font-bold text-blue-600">MediaLeader</span>
             </Link>
           </motion.div>
 
@@ -26,44 +53,61 @@ export const Header = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="flex space-x-6"
             >
-              <Link to="/media" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+              <Link to="/media" className="text-gray-600 hover:text-blue-600 transition-colors">
                 Media
               </Link>
-              <Link to="/journalists" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+              <Link to="/journalists" className="text-gray-600 hover:text-blue-600 transition-colors">
                 Journalists
               </Link>
-              <Link to="/search" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+              <Link to="/search" className="text-gray-600 hover:text-blue-600 transition-colors">
                 Search
               </Link>
-              <Link to="/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
-                Dashboard
-              </Link>
+              {user && (
+                <Link 
+                  to={user.role === 'journalist' ? '/journalist-dashboard' : '/media-dashboard'} 
+                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  Dashboard
+                </Link>
+              )}
             </motion.div>
           </nav>
 
-          {/* User Menu */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex items-center space-x-4"
-          >
-            <button className="btn btn-secondary">
-              Sign In
-            </button>
-            <button className="btn btn-primary">
-              Sign Up
-            </button>
-          </motion.div>
-
-          {/* Mobile Menu Button */}
-          <button className="md:hidden p-2">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          {/* Auth Buttons */}
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-gray-600">
+                  Welcome, {user.name}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors font-medium"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>
   );
 };
+
+export default Header;

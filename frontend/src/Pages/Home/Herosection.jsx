@@ -152,7 +152,7 @@ export const HeroSection = () => {
   return (
     <div className="min-h-screen px-6 py-3 bg-gradient-to-br from-blue-900 via-purple-800 to-pink-600 text-white">
       {/* Add global styles for select dropdowns */}
-      <style jsx global>{`
+      <style>{`
         select {
           appearance: none;
           -webkit-appearance: none;
