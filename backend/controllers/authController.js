@@ -93,16 +93,20 @@ export const verifyEmail = async (req, res) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Find user and verify
-    const user = await User.findOne({ 
-      email: decoded.email,
-      verificationToken: token
-    });
+    // Find user by email
+    const user = await User.findOne({ email: decoded.email });
 
     if (!user) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid or expired verification link'
+        message: 'User not found'
+      });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email already verified'
       });
     }
 
@@ -126,6 +130,7 @@ export const verifyEmail = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Verification error:', error);
     res.status(400).json({
       status: 'error',
       message: 'Invalid or expired verification link'

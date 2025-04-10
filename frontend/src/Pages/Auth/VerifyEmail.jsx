@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState('verifying');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const verifyEmail = async () => {
       const token = searchParams.get('token');
       if (!token) {
         setStatus('error');
+        setError('Verification token is missing');
         return;
       }
 
@@ -25,28 +27,40 @@ const VerifyEmail = () => {
           
           setStatus('success');
           
-          // Redirect based on role after a short delay
+          // Redirect to social page after a short delay
           setTimeout(() => {
-            if (response.data.user.role === 'journalist') {
-              navigate('/journalist-dashboard');
-            } else {
-              navigate('/dashboard');
-            }
+            navigate('/social');
           }, 2000);
         }
-      } catch {
+      } catch (error) {
         setStatus('error');
+        setError(error.response?.data?.message || 'Verification failed');
       }
     };
 
     verifyEmail();
   }, [navigate, searchParams]);
 
+  const handleResendVerification = async () => {
+    try {
+      const email = searchParams.get('email');
+      if (!email) {
+        setError('Email is missing');
+        return;
+      }
+
+      await axios.post('http://localhost:5000/api/auth/resend-otp', { email });
+      setError('New verification email has been sent. Please check your inbox.');
+    } catch (error) {
+      setError(error.response?.data?.message || 'Failed to resend verification email');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <span className="text-2xl font-bold text-blue-600">MediaLeader</span>
+          <Link to="/" className="text-2xl font-bold text-blue-600">MediaLeader</Link>
         </div>
       </div>
 
@@ -68,7 +82,7 @@ const VerifyEmail = () => {
                 </svg>
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Email Verified!</h2>
-              <p className="text-gray-600">Your email has been verified successfully. Redirecting you to dashboard...</p>
+              <p className="text-gray-600">Your email has been verified successfully. Redirecting you to social feed...</p>
             </>
           )}
 
@@ -80,13 +94,21 @@ const VerifyEmail = () => {
                 </svg>
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Verification Failed</h2>
-              <p className="text-gray-600 mb-6">The verification link is invalid or has expired.</p>
-              <button
-                onClick={() => navigate('/signup')}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Back to Sign Up
-              </button>
+              <p className="text-red-600 mb-6">{error}</p>
+              <div className="space-y-4">
+                <button
+                  onClick={handleResendVerification}
+                  className="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Resend Verification Email
+                </button>
+                <Link
+                  to="/login"
+                  className="block px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Back to Login
+                </Link>
+              </div>
             </>
           )}
         </div>

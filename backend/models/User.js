@@ -39,7 +39,19 @@ const userSchema = new mongoose.Schema({
     position: String,
     experience: Number,
     portfolio: String,
-    pressId: String
+    pressId: String,
+    country: String,
+    state: String,
+    contactNumber: {
+      type: String,
+      validate: {
+        validator: function(v) {
+          // Allow digits, spaces, dashes, plus sign, and parentheses
+          return /^[\d\s\-+()]+$/.test(v);
+        },
+        message: props => `${props.value} is not a valid phone number!`
+      }
+    }
   }
 }, {
   timestamps: true

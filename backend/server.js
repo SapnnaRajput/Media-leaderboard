@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
+import socialRoutes from './routes/socialRoutes.js';
 import { limiter, helmetMiddleware, xssMiddleware, hppMiddleware } from './middleware/security.js';
 
 const app = express();
@@ -17,8 +18,10 @@ app.use((req, res, next) => {
 app.use(helmetMiddleware); // Set security HTTP headers
 app.use('/api', limiter); // Rate limiting
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10kb' })); // Body parser with size limit
 app.use(xssMiddleware); // Data sanitization against XSS
@@ -31,6 +34,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/social', socialRoutes);
 
 // Global error handling middleware
 app.use((err, req, res, next) => {

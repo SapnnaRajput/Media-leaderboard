@@ -39,12 +39,8 @@ const Login = () => {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        // Redirect based on role
-        if (response.data.user.role === 'journalist') {
-          navigate('/journalist-dashboard');
-        } else {
-          navigate('/dashboard');
-        }
+        // Redirect both users and journalists to social page
+        navigate('/social');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred during login');
@@ -63,29 +59,29 @@ const Login = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">Welcome Back!</h2>
-            <p className="text-blue-100">Sign in to your account</p>
+      <div className="flex-1 flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-gray-100">
+        <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden transform hover:scale-[1.01] transition-transform duration-300">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-8 py-10 text-center">
+            <h2 className="text-3xl font-bold text-white mb-3">Welcome Back!</h2>
+            <p className="text-blue-100 text-lg">Sign in to your account</p>
           </div>
 
-          <div className="p-6 bg-white">
+          <div className="p-8 bg-white">
             {successMessage && (
-              <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                 <p className="text-green-700">{successMessage}</p>
               </div>
             )}
 
             {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <p className="text-red-700">{error}</p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Email Address
                 </label>
                 <input
@@ -93,14 +89,14 @@ const Login = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-white shadow-sm"
                   required
                   placeholder="Enter your email"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Password
                 </label>
                 <input
@@ -108,47 +104,29 @@ const Login = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-white shadow-sm"
                   required
                   placeholder="Enter your password"
                 />
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <Link
-                  to="/"
-                  className="px-6 py-2.5 text-gray-600 hover:text-gray-800 font-medium transition-colors rounded-lg hover:bg-gray-50"
-                >
-                  Back to Home
-                </Link>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:from-blue-700 hover:to-blue-800"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Signing in...
-                    </span>
-                  ) : (
-                    'Sign In'
-                  )}
-                </button>
-              </div>
-
-              <div className="mt-4 text-center">
-                <p className="text-gray-600">
-                  Don't have an account?{' '}
-                  <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-                    Sign up
-                  </Link>
-                </p>
-              </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </button>
             </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-gray-600">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-semibold">
+                  Sign up
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

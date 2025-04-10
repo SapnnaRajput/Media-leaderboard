@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 
 export const Header = () => {
@@ -35,32 +34,23 @@ export const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <div>
             <Link to="/" className="flex items-center">
               <span className="text-2xl font-bold text-blue-600">MediaLeader</span>
             </Link>
-          </motion.div>
+          </div>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex space-x-6"
-            >
+            <div className="flex space-x-6">
               <Link to="/media" className="text-gray-600 hover:text-blue-600 transition-colors">
                 Media
               </Link>
               <Link to="/journalists" className="text-gray-600 hover:text-blue-600 transition-colors">
                 Journalists
               </Link>
-              <Link to="/search" className="text-gray-600 hover:text-blue-600 transition-colors">
-                Search
+              <Link to="/social" className="text-gray-600 hover:text-blue-600 transition-colors">
+                Social
               </Link>
               {user && (
                 <Link 
@@ -70,7 +60,7 @@ export const Header = () => {
                   Dashboard
                 </Link>
               )}
-            </motion.div>
+            </div>
           </nav>
 
           {/* Auth Buttons */}
