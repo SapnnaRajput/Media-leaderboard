@@ -1,25 +1,46 @@
 import React, { useState } from 'react';
 import { socialService } from '../../services/socialService';
-import { FaHeart, FaRegHeart, FaComment, FaShare, FaTrash, FaUserCircle, FaRetweet, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaComment, FaShare, FaTrash, FaUserCircle, FaRetweet, FaExternalLinkAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
   const [showComments, setShowComments] = useState(false);
+  const [showContent, setShowContent] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem('user'));
 
   const handleLike = async () => {
     try {
       setIsLoading(true);
+      
+      // Create a local copy of the post for optimistic updates
+      const updatedPost = { ...post };
+      
       if (post.likes.includes(currentUser._id)) {
+        // Optimistically remove the like
+        updatedPost.likes = updatedPost.likes.filter(id => id !== currentUser._id);
+        
+        // Update the UI immediately
+        onPostUpdate(updatedPost);
+        
+        // Then send the request to the server
         await socialService.unlikePost(post._id);
       } else {
+        // Optimistically add the like
+        updatedPost.likes = [...updatedPost.likes, currentUser._id];
+        
+        // Update the UI immediately
+        onPostUpdate(updatedPost);
+        
+        // Then send the request to the server
         await socialService.likePost(post._id);
       }
-      onPostUpdate();
     } catch (error) {
       console.error('Error toggling like:', error);
+      // If there was an error, refresh the posts to get the correct state
+      onPostUpdate();
     } finally {
       setIsLoading(false);
     }
@@ -31,11 +52,39 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
 
     try {
       setIsLoading(true);
-      await socialService.addComment(post._id, newComment);
+      
+      // Send the request to the server
+      const response = await socialService.addComment(post._id, newComment);
+      
+      // If the server returned the updated post with the new comment
+      if (response && response.data) {
+        // Update the UI with the returned post
+        onPostUpdate(response.data);
+      } else {
+        // Create a local copy of the post and add the comment
+        const updatedPost = { ...post };
+        const newCommentObj = {
+          _id: Date.now().toString(), // Temporary ID until refresh
+          content: newComment,
+          user: {
+            _id: currentUser._id,
+            name: currentUser.name
+          },
+          createdAt: new Date().toISOString()
+        };
+        
+        updatedPost.comments = [...updatedPost.comments, newCommentObj];
+        
+        // Update the UI immediately
+        onPostUpdate(updatedPost);
+      }
+      
+      // Clear the comment input
       setNewComment('');
-      onPostUpdate();
     } catch (error) {
       console.error('Error adding comment:', error);
+      // If there was an error, refresh the posts to get the correct state
+      onPostUpdate();
     } finally {
       setIsLoading(false);
     }
@@ -44,10 +93,48 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
   const handleShare = async () => {
     try {
       setIsLoading(true);
-      await socialService.sharePost(post._id);
-      onPostUpdate();
+      
+      // Send the request to the server
+      const response = await socialService.sharePost(post._id);
+      
+      // Check if the share was successful
+      if (response && response.status === 'success') {
+        // Create a local copy of the post and add the share
+        const updatedPost = { ...post };
+        updatedPost.shares = [...updatedPost.shares, {
+          user: {
+            _id: currentUser._id,
+            name: currentUser.name
+          }
+        }];
+        
+        // Update the UI immediately
+        onPostUpdate(updatedPost);
+        
+        // Show a success message
+        alert('Post shared successfully! You can now see it in your profile.');
+        
+        // If we have a shared post in the response, we could add it to the posts list
+        if (response.data && response.data.sharedPost) {
+          // This would require passing a callback to add a new post to the list
+          // For now, the user will see it when they navigate to their profile or refresh
+        }
+      } else {
+        // If we don't have the updated data, refresh the posts
+        onPostUpdate();
+      }
     } catch (error) {
       console.error('Error sharing post:', error);
+      
+      // Check for specific error messages
+      if (error.response?.data?.message === 'You have already shared this post') {
+        alert('You have already shared this post.');
+      } else {
+        // Generic error
+        alert('Error sharing post. Please try again.');
+        // If there was an error, refresh the posts to get the correct state
+        onPostUpdate();
+      }
     } finally {
       setIsLoading(false);
     }
@@ -135,11 +222,51 @@ const PostCard = ({ post, onPostUpdate, onPostDelete }) => {
         )}
       </div>
 
-      {/* Post Content */}
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-3">{displayPost.title}</h3>
-        <p className="text-gray-700 leading-relaxed">{displayPost.content}</p>
+      {/* Post Image and Title */}
+      <div 
+        className="cursor-pointer"
+        onClick={() => setShowContent(!showContent)}
+      >
+        <div className="relative w-full aspect-[16/9] mb-4 bg-gray-100 rounded-lg overflow-hidden">
+          {!imageLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
+          <img
+            src={displayPost.image}
+            alt={displayPost.title}
+            className={`w-full h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
+          />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">{displayPost.title}</h3>
       </div>
+
+      {/* Expandable Content */}
+      {showContent && (
+        <div className="mt-4 mb-6">
+          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{displayPost.content}</p>
+        </div>
+      )}
+
+      {/* Expand/Collapse Button */}
+      <button
+        onClick={() => setShowContent(!showContent)}
+        className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 py-2 transition-colors"
+      >
+        {showContent ? (
+          <>
+            <FaChevronUp />
+            <span>Show less</span>
+          </>
+        ) : (
+          <>
+            <FaChevronDown />
+            <span>Read more</span>
+          </>
+        )}
+      </button>
 
       {/* Post Stats */}
       <div className="flex items-center justify-between text-sm text-gray-500 mb-4 px-2">

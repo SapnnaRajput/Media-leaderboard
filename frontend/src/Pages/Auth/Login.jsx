@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,6 +14,10 @@ const Login = () => {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
+    // Clear any existing auth data on mount
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
     // Check for success message from signup/verification
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
@@ -32,18 +36,34 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const response = await axios.post('/api/auth/login', formData);
       
-      if (response.data.token) {
-        // Save auth data
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (response.data.token && response.data.user) {
+        const { token, user } = response.data;
+        
+        // Validate user data
+        if (!user._id || !user.email || !user.role || !user.isEmailVerified) {
+          throw new Error('Invalid user data received');
+        }
 
-        // Redirect both users and journalists to social page
-        navigate('/social');
+        // Save auth data
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        // Configure axios with the new token
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Navigate to the intended page or social by default
+        const from = location.state?.from?.pathname || '/social';
+        navigate(from, { replace: true });
+      } else {
+        throw new Error('Invalid response from server');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred during login');
+      setError(err.response?.data?.message || err.message || 'An error occurred during login');
+      // Clear any partial auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +112,7 @@ const Login = () => {
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-white shadow-sm"
                   required
                   placeholder="Enter your email"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -107,13 +128,18 @@ const Login = () => {
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-white shadow-sm"
                   required
                   placeholder="Enter your password"
+                  disabled={isLoading}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`w-full py-3 px-6 rounded-xl text-white font-semibold shadow-lg transition-all ${
+                  isLoading
+                    ? 'bg-blue-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 hover:shadow-xl'
+                }`}
               >
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -122,7 +148,7 @@ const Login = () => {
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Don't have an account?{' '}
-                <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-semibold">
+                <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
                   Sign up
                 </Link>
               </p>

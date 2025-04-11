@@ -6,6 +6,7 @@ import Login from './Pages/Auth/Login';
 import Signup from './Pages/Auth/Signup';
 import VerifyEmail from './Pages/Auth/VerifyEmail';
 import Social from './Pages/Social/Social';
+import PrivateRoute from './components/Auth/PrivateRoute';
 import './utils/axiosConfig';
 
 function App() {
@@ -17,7 +18,11 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="social" element={<Social />} />
+          <Route path="social" element={
+            <PrivateRoute>
+              <Social />
+            </PrivateRoute>
+          } />
           <Route path="media" element={<div>Media Outlets</div>} />
           <Route path="journalists" element={<div>Journalists</div>} />
           <Route path="analytics" element={<div>Analytics</div>} />

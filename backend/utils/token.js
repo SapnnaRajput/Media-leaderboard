@@ -3,13 +3,14 @@ import jwt from 'jsonwebtoken';
 export const generateToken = (user) => {
   // Create a plain object with only the necessary user data
   const payload = {
-    id: user._id.toString(),
+    _id: user._id.toString(),  // Changed from id to _id to match MongoDB
     email: user.email,
-    role: user.role
+    role: user.role,
+    isEmailVerified: user.isEmailVerified
   };
   
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d'  // Default to 7 days if not set
   });
 };
 

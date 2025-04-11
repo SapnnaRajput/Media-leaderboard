@@ -1,10 +1,40 @@
-import 'dotenv/config';
+// Load environment variables first, before any other imports
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+// Get directory name in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from .env file
+const envPath = path.resolve(__dirname, '.env');
+console.log('Loading environment variables from:', envPath);
+dotenv.config({ path: envPath });
+
+// Log environment variables for debugging
+console.log('Environment Variables Check:', {
+  EMAIL_USER: process.env.EMAIL_USER ? 'exists' : 'missing',
+  EMAIL_PASS: process.env.EMAIL_PASS ? 'exists' : 'missing',
+  JWT_SECRET: process.env.JWT_SECRET ? 'exists' : 'missing',
+  FRONTEND_URL: process.env.FRONTEND_URL ? 'exists' : 'missing',
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ? 'exists' : 'missing',
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? 'exists' : 'missing',
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? 'exists' : 'missing',
+  NODE_ENV: process.env.NODE_ENV
+});
+
+// Now import other dependencies
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import socialRoutes from './routes/socialRoutes.js';
 import { limiter, helmetMiddleware, xssMiddleware, hppMiddleware } from './middleware/security.js';
+import { initializeEmailTransporter } from './controllers/authController.js';
+
+// Initialize email transporter with loaded environment variables
+initializeEmailTransporter();
 
 const app = express();
 
@@ -24,6 +54,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10kb' })); // Body parser with size limit
+app.use(express.urlencoded({ extended: true }));
 app.use(xssMiddleware); // Data sanitization against XSS
 app.use(hppMiddleware); // Prevent parameter pollution
 
@@ -34,7 +65,15 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/social', socialRoutes);
+app.use('/api', socialRoutes); // Changed to handle all social/post routes under /api
+
+// Debug environment variables immediately after loading
+console.log('Initial Environment Variables Check:', {
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY?.slice(0, 4) + '...',
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? '***' : undefined,
+  NODE_ENV: process.env.NODE_ENV
+});
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
@@ -49,8 +88,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Database connection
-console.log('Attempting to connect to MongoDB...'); // Debug logging for DB connection
+// Connect to MongoDB
+console.log('Attempting to connect to MongoDB...');
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => {
@@ -59,6 +98,22 @@ mongoose.connect(process.env.MONGODB_URI)
   });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Environment Variables Check:', {
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? process.env.CLOUDINARY_API_KEY.substring(0, 5) + '...' : undefined,
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? '***' : undefined,
+    NODE_ENV: process.env.NODE_ENV
+  });
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`Port ${PORT} is already in use. Trying port ${PORT + 1}...`);
+    // Try using the next port
+    app.listen(PORT + 1, () => {
+      console.log(`Server running on port ${PORT + 1}`);
+    });
+  } else {
+    console.error('Server error:', err);
+  }
 });

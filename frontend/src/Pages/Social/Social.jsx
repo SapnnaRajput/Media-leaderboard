@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreatePost from '../../components/Social/CreatePost';
 import PostCard from '../../components/Social/PostCard';
@@ -12,36 +12,68 @@ const Social = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      navigate('/login');
-      return;
-    }
-    setUser(JSON.parse(storedUser));
-    fetchPosts();
-  }, [navigate]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await socialService.getAllPosts();
-      setPosts(response?.data?.posts || []);
+      setError('');
+      const data = await socialService.getAllPosts();
+      setPosts(Array.isArray(data) ? data : []);
     } catch (error) {
-      setError('Failed to load posts');
       console.error('Error fetching posts:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to load posts. Please try again.';
+      
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const initializeSocial = async () => {
+      try {
+        const storedUser = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        
+        if (!storedUser || !token) {
+          throw new Error('Authentication required');
+        }
+
+        setUser(JSON.parse(storedUser));
+        await fetchPosts();
+      } catch (error) {
+        console.error('Initialization error:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
+    };
+
+    initializeSocial();
+  }, [navigate, fetchPosts]);
 
   const handlePostCreated = () => {
     fetchPosts();
   };
 
-  const handlePostUpdate = () => {
-    fetchPosts();
-  };
+  const handlePostUpdate = useCallback((updatedPost) => {
+    // If an updated post is provided, update just that post
+    if (updatedPost) {
+      setPosts(currentPosts => 
+        currentPosts.map(post => 
+          post._id === updatedPost._id ? updatedPost : post
+        )
+      );
+    } else {
+      // If no updated post is provided, fetch all posts (fallback)
+      fetchPosts();
+    }
+  }, [fetchPosts]);
 
   const handlePostDelete = (postId) => {
     setPosts(posts.filter(post => post._id !== postId));
@@ -94,21 +126,14 @@ const Social = () => {
             <PostCard
               key={post._id}
               post={post}
+              currentUser={user}
               onPostUpdate={handlePostUpdate}
               onPostDelete={handlePostDelete}
             />
           ))}
           {posts.length === 0 && !isLoading && (
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-              <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15" />
-              </svg>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Posts Yet</h3>
-              <p className="text-gray-600">
-                {user?.role === 'journalist' 
-                  ? 'Share your first story with the community!'
-                  : 'Follow journalists to see their stories in your feed.'}
-              </p>
+            <div className="text-center py-8">
+              <p className="text-gray-500">No posts yet. {user?.role === 'journalist' && 'Create your first post!'}</p>
             </div>
           )}
         </div>

@@ -4,19 +4,28 @@ const postSchema = new mongoose.Schema({
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
-  },
-  content: {
-    type: String,
-    required: [true, 'Post content is required'],
-    trim: true,
-    maxlength: [1000, 'Post content cannot exceed 1000 characters']
+    required: true,
+    index: true
   },
   title: {
     type: String,
-    required: [true, 'Post title is required'],
+    required: true,
     trim: true,
-    maxlength: [100, 'Title cannot exceed 100 characters']
+    maxLength: 100
+  },
+  content: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 1000
+  },
+  image: {
+    type: String,
+    required: true
+  },
+  cloudinaryPublicId: {
+    type: String,
+    required: true
   },
   likes: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -32,7 +41,7 @@ const postSchema = new mongoose.Schema({
       type: String,
       required: true,
       trim: true,
-      maxlength: [500, 'Comment cannot exceed 500 characters']
+      maxLength: 200
     },
     createdAt: {
       type: Date,
@@ -45,22 +54,24 @@ const postSchema = new mongoose.Schema({
       ref: 'User',
       required: true
     },
-    sharedAt: {
+    createdAt: {
       type: Date,
       default: Date.now
     }
   }],
-  isSharedPost: {
-    type: Boolean,
-    default: false
-  },
   originalPost: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Post'
+    ref: 'Post',
+    index: true
   }
 }, {
   timestamps: true
 });
+
+// Indexes
+postSchema.index({ createdAt: -1 });
+postSchema.index({ 'comments.createdAt': -1 });
+postSchema.index({ 'shares.createdAt': -1 });
 
 // Middleware to populate author details
 postSchema.pre(/^find/, function(next) {

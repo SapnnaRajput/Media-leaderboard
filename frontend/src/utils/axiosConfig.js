@@ -1,13 +1,16 @@
 import axios from 'axios';
 
-// Set base URL
-axios.defaults.baseURL = 'http://localhost:5000';
+// Create axios instance with base URL
+const instance = axios.create({
+  baseURL: 'http://localhost:5000'
+});
 
 // Add request interceptor to add auth token
-axios.interceptors.request.use(
+instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
+      // Make sure to format the Authorization header correctly
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -18,15 +21,16 @@ axios.interceptors.request.use(
 );
 
 // Add response interceptor to handle auth errors
-axios.interceptors.response.use(
+instance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Clear invalid auth data
+    // Only handle 401 errors for authenticated requests
+    if (error.response?.status === 401 && localStorage.getItem('token')) {
+      // Clear auth data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       
-      // Redirect to login if not already there
+      // Only redirect if not already on login page
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
@@ -34,3 +38,5 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export default instance;

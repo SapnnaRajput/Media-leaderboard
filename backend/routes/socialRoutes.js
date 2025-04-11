@@ -1,35 +1,31 @@
 import express from 'express';
-import { protect } from '../middleware/auth.js';
-import {
+import auth from '../middleware/auth.js';
+import upload from '../middleware/upload.js';
+import { 
   createPost,
   getAllPosts,
   getPost,
+  updatePost,
+  deletePost,
   likePost,
   unlikePost,
   addComment,
-  deleteComment,
-  sharePost,
-  getMyPosts,
-  deletePost
+  sharePost
 } from '../controllers/socialController.js';
 
 const router = express.Router();
 
-// Protect all routes
-router.use(protect);
-
 // Post routes
-router.post('/posts', createPost);
-router.get('/posts', getAllPosts);
-router.get('/posts/my', getMyPosts);
-router.get('/posts/:id', getPost);
-router.delete('/posts/:id', deletePost);
+router.post('/posts', auth, upload.single('image'), createPost);
+router.get('/posts', auth, getAllPosts);
+router.get('/posts/:id', auth, getPost);
+router.patch('/posts/:id', auth, updatePost);
+router.delete('/posts/:id', auth, deletePost);
 
 // Post interactions
-router.post('/posts/:id/like', likePost);
-router.delete('/posts/:id/like', unlikePost);
-router.post('/posts/:id/comments', addComment);
-router.delete('/posts/:id/comments/:commentId', deleteComment);
-router.post('/posts/:id/share', sharePost);
+router.post('/posts/:id/like', auth, likePost);
+router.delete('/posts/:id/like', auth, unlikePost);
+router.post('/posts/:id/comments', auth, addComment);
+router.post('/posts/:id/share', auth, sharePost);
 
 export default router;
